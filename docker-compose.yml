@@ -32,10 +32,11 @@ services:
       - ./data/moodle_data/moodledata:/var/moodledata
       - ./apps/moodle/php.ini:/usr/local/etc/php/conf.d/php.ini
     environment:
-      MOODLE_DATABASE_HOST: moodle-db
-      MOODLE_DATABASE_NAME: moodle
-      MOODLE_DATABASE_USER: ${MOODLE_DB_USER}
-      MOODLE_DATABASE_PASSWORD: ${MOODLE_DB_PASSWORD}
+      MOODLE_DOCKER_WEB_HOST: ${MOODLE_DOCKER_WEB_HOST:-lms.local.bombano.com}
+      MOODLE_DATABASE_HOST: ${MOODLE_DATABASE_HOST:-moodle-db}
+      MOODLE_DATABASE_NAME: ${MOODLE_DATABASE_NAME:-exampledb}
+      MOODLE_DATABASE_USER: ${MOODLE_DB_USER:-exampleuser}
+      MOODLE_DATABASE_PASSWORD: ${MOODLE_DB_PASSWORD:-examplepass}
     networks:
       - backend
       - frontend
