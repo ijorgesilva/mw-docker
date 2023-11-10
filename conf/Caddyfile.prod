@@ -12,19 +12,9 @@
 # Reverse proxy
 # https://caddyserver.com/docs/caddyfile/directives/reverse_proxy
 #--------------------------------------------------------------------------
-# Moodle (LMS)
-lms.local.bombano.com {
-    reverse_proxy moodle:80 {
-        header_up X-Real-IP {remote_host}
-        header_up Host {http.request.host}
-        header_up X-Forwarded-For {remote_host}
-        header_up X-Forwarded-Proto {scheme}
-    }
-    import https_config
-}
 
 # WordPress (CMS)
-cms.local.bombano.com {
+academy.lpifirm.com {
     reverse_proxy wordpress:80 {
         header_up X-Real-IP {remote_host}
         header_up Host {http.request.host}
@@ -34,8 +24,19 @@ cms.local.bombano.com {
     import https_config
 }
 
-# Static Site
-local.bombano.com {
+# Moodle (LMS)
+lms.academy.lpifirm.com {
+    reverse_proxy moodle:80 {
+        header_up X-Real-IP {remote_host}
+        header_up Host {http.request.host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+    import https_config
+}
+
+# Landing Pages
+landing.academy.lpifirm.com {
     root * /usr/share/caddy/static_site
     file_server
     encode gzip
