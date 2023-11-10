@@ -1,0 +1,58 @@
+# Docker
+docker-compose.override.yml
+*.env
+**/Dockerfile
+*.dockerignore
+docker-compose*.yml
+docker-sync.yml
+!docker-compose.yml
+!example.env
+
+# Specific Apps
+# Copy your static site if needed into app/static
+app/static/
+# Download the Moodle version into app/moodle
+app/moodle/
+
+# Volumes
+data/
+nginx_conf/
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+*.out
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Node modules
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Backup files
+*.bak
+*.tmp
+*.temp
+
+# WordPress specific
+wp-content/uploads/
+wp-content/upgrade/
+wp-content/backup-db/
+wp-content/backups/
+wp-content/blogs.dir/
+wp-content/cache/
+wp-content/upgrade/
+wp-config.php

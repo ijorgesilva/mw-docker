@@ -1,0 +1,124 @@
+version: '3.8'
+
+services:
+
+  reverse-proxy-caddy:
+    image: caddy:alpine
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./conf/Caddyfile.${COMPOSE_PROJECT_ENV}:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+      - ./app/static:/usr/share/caddy/static_site
+    networks:
+      - frontend
+    depends_on:
+      - moodle
+      - wordpress
+    restart: on-failure
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+        
+  moodle-db:
+    image: mysql:5.7
+    volumes:
+      - ./data/moodle_data/db:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: moodle
+      MYSQL_USER: ${MOODLE_DB_USER}
+      MYSQL_PASSWORD: ${MOODLE_DB_PASSWORD}
+    networks:
+      - backend
+    restart: on-failure
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  moodle:
+    image: 'moodlehq/moodle-php-apache:${MOODLE_DOCKER_PHP_VERSION}'
+    volumes:
+      - ./app/moodle:/var/www/html
+      - ./data/moodle_data/moodledata:/var/moodledata
+      - ./conf/php.ini:/usr/local/etc/php/conf.d/php.ini
+    environment:
+      MOODLE_DATABASE_HOST: moodle-db
+      MOODLE_DATABASE_NAME: moodle
+      MOODLE_DATABASE_USER: ${MOODLE_DB_USER}
+      MOODLE_DATABASE_PASSWORD: ${MOODLE_DB_PASSWORD}
+      # MOODLE_DOCKER_WEB_HOST: ${MOODLE_DOCKER_WEB_HOST}
+    networks:
+      - backend
+      - frontend
+    restart: on-failure
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  wordpress-db:
+    image: mysql:5.7
+    volumes:
+      - ./data/wordpress_data/db:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: ${WORDPRESS_DB_USER}
+      MYSQL_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+    networks:
+      - backend
+    restart: on-failure
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  wordpress:
+    depends_on:
+      - wordpress-db
+    image: wordpress:latest
+    volumes:
+      - ./data/wordpress_data/html:/var/www/html
+    environment:
+      WORDPRESS_DB_HOST: wordpress-db:3306
+      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+      WORDPRESS_DB_NAME: wordpress
+    networks:
+      - backend
+      - frontend
+    restart: on-failure
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    image: redis:alpine
+    networks:
+      - backend
+    volumes:
+      - ./data/redis:/data
+    restart: on-failure
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  caddy_data: {}
+  caddy_config: {}
+  moodle_data:
+  wordpress_data:
+  nginx_conf:
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge

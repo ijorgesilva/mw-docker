@@ -1,0 +1,48 @@
+#--------------------------------------------------------------------------
+# Caddy configuration
+# https://caddyserver.com/docs/caddyfile/options
+#--------------------------------------------------------------------------
+
+(https_config) {
+    redir http://{host}{uri} https://{host}{uri} permanent
+    # header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+}
+
+#--------------------------------------------------------------------------
+# Reverse proxy
+# https://caddyserver.com/docs/caddyfile/directives/reverse_proxy
+#--------------------------------------------------------------------------
+# Moodle (LMS)
+lms.local.bombano.com {
+    reverse_proxy moodle:80 {
+        header_up X-Real-IP {remote_host}
+        header_up Host {http.request.host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+    import https_config
+}
+
+# WordPress (CMS)
+cms.local.bombano.com {
+    reverse_proxy wordpress:80 {
+        header_up X-Real-IP {remote_host}
+        header_up Host {http.request.host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+    import https_config
+}
+
+# Static Site
+local.bombano.com {
+    root * /usr/share/caddy/static_site
+    file_server
+    encode gzip
+
+    @staticFiles {
+        path *.css, *.gif, *.ico, *.jpeg, *.jpg, *.js, *.png
+    }
+    header @staticFiles Cache-Control "max-age=31536000"
+    import https_config
+}
