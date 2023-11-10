@@ -15,24 +15,14 @@
 
 # WordPress (CMS)
 academy.lpifirm.com {
-    reverse_proxy wordpress:80 {
-        header_up X-Real-IP {remote_host}
-        header_up Host {http.request.host}
-        header_up X-Forwarded-For {remote_host}
-        header_up X-Forwarded-Proto {scheme}
-    }
-    import https_config
+    reverse_proxy wordpress:80
+    #import https_config
 }
 
 # Moodle (LMS)
 lms.academy.lpifirm.com {
-    reverse_proxy moodle:80 {
-        header_up X-Real-IP {remote_host}
-        header_up Host {http.request.host}
-        header_up X-Forwarded-For {remote_host}
-        header_up X-Forwarded-Proto {scheme}
-    }
-    import https_config
+    reverse_proxy moodle:80
+    #import https_config
 }
 
 # Landing Pages
