@@ -30,3 +30,8 @@ http://local.bombano.com {
     }
     header @staticFiles Cache-Control "max-age=31536000"
 }
+
+# PhpMyAdmin
+http://phpmyadmin.local.bombano.com {
+    reverse_proxy phpmyadmin:80
+}

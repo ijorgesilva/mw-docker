@@ -2,8 +2,9 @@ version: '3.8'
 
 services:
 
-  reverse-proxy-caddy:
+  caddy:
     image: caddy:alpine
+    container_name: ${COMPOSE_PROJECT_NAME}_caddy
     ports:
       - '80:80'
       - '443:443'
@@ -11,7 +12,7 @@ services:
       - ./conf/Caddyfile.${COMPOSE_PROJECT_ENV}:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
-      - ./app/static:/usr/share/caddy/static_site
+      - ./data/static_site:/usr/share/caddy/static_site
     networks:
       - frontend
     depends_on:
@@ -23,8 +24,30 @@ services:
         max-size: "10m"
         max-file: "3"
         
+  moodle:
+    image: 'moodlehq/moodle-php-apache:${MOODLE_DOCKER_PHP_VERSION}'
+    container_name: ${COMPOSE_PROJECT_NAME}_moodle
+    volumes:
+      - ./data/moodle_data/html/moodle:/var/www/html
+      - ./data/moodle_data/moodledata:/var/moodledata
+      - ./apps/moodle/php.ini:/usr/local/etc/php/conf.d/php.ini
+    environment:
+      MOODLE_DATABASE_HOST: moodle-db
+      MOODLE_DATABASE_NAME: moodle
+      MOODLE_DATABASE_USER: ${MOODLE_DB_USER}
+      MOODLE_DATABASE_PASSWORD: ${MOODLE_DB_PASSWORD}
+    networks:
+      - backend
+      - frontend
+    restart: on-failure
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   moodle-db:
     image: mysql:5.7
+    container_name: ${COMPOSE_PROJECT_NAME}_moodle-db
     volumes:
       - ./data/moodle_data/db:/var/lib/mysql
     environment:
@@ -40,18 +63,20 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  moodle:
-    image: 'moodlehq/moodle-php-apache:${MOODLE_DOCKER_PHP_VERSION}'
+  wordpress:
+    depends_on:
+      - wordpress-db
+    image: wordpress:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_wordpress
     volumes:
-      - ./app/moodle:/var/www/html
-      - ./data/moodle_data/moodledata:/var/moodledata
-      - ./conf/php.ini:/usr/local/etc/php/conf.d/php.ini
+      - ./data/wordpress_data/html/wordpress:/var/www/html
     environment:
-      MOODLE_DATABASE_HOST: moodle-db
-      MOODLE_DATABASE_NAME: moodle
-      MOODLE_DATABASE_USER: ${MOODLE_DB_USER}
-      MOODLE_DATABASE_PASSWORD: ${MOODLE_DB_PASSWORD}
-      # MOODLE_DOCKER_WEB_HOST: ${MOODLE_DOCKER_WEB_HOST}
+      # Database configuration
+      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER:-exampleuser}
+      WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME:-exampledb}
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD:-examplepass}
+      WORDPRESS_DB_HOST: ${WORDPRESS_DB_HOST:-wordpress-db}
+      WORDPRESS_DEBUG: ${WORDPRESS_DEBUG:-0}
     networks:
       - backend
       - frontend
@@ -67,9 +92,9 @@ services:
       - ./data/wordpress_data/db:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: wordpress
-      MYSQL_USER: ${WORDPRESS_DB_USER}
-      MYSQL_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+      MYSQL_USER: ${WORDPRESS_DB_USER:-exampleuser}
+      MYSQL_DATABASE: ${WORDPRESS_DB_NAME:-exampledb}
+      MYSQL_PASSWORD: ${WORDPRESS_DB_PASSWORD:-examplepass}
     networks:
       - backend
     restart: on-failure
@@ -77,29 +102,10 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-
-  wordpress:
-    depends_on:
-      - wordpress-db
-    image: wordpress:latest
-    volumes:
-      - ./data/wordpress_data/html:/var/www/html
-    environment:
-      WORDPRESS_DB_HOST: wordpress-db:3306
-      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
-      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
-      WORDPRESS_DB_NAME: wordpress
-    networks:
-      - backend
-      - frontend
-    restart: on-failure
-    logging:
-      options:
-        max-size: "10m"
-        max-file: "3"
-
+  
   redis:
     image: redis:alpine
+    container_name: ${COMPOSE_PROJECT_NAME}_redis
     networks:
       - backend
     volumes:
@@ -109,6 +115,19 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+  
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: ${COMPOSE_PROJECT_NAME}_phpmyadmin
+    environment:
+      PMA_HOST: wordpress-db
+      PMA_PORT: 3306
+    ports:
+      - "8080:80"
+    depends_on:
+      - wordpress-db
+    networks:
+      - backend
 
 volumes:
   caddy_data: {}

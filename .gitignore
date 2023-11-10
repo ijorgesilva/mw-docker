@@ -1,18 +1,8 @@
 # Docker
 docker-compose.override.yml
 *.env
-**/Dockerfile
-*.dockerignore
-docker-compose*.yml
-docker-sync.yml
 !docker-compose.yml
 !example.env
-
-# Specific Apps
-# Copy your static site if needed into app/static
-app/static/
-# Download the Moodle version into app/moodle
-app/moodle/
 
 # Volumes
 data/
