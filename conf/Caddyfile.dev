@@ -2,7 +2,11 @@
 # Caddy configuration
 # https://caddyserver.com/docs/caddyfile/options
 #--------------------------------------------------------------------------
-
+(common) {
+    header /* {
+        -Server
+    }
+}
 
 #--------------------------------------------------------------------------
 # Reverse proxy
@@ -12,11 +16,13 @@
 # WordPress (CMS)
 http://local.bombano.com {
     reverse_proxy wordpress:80
+    import common
 }
 
 # Moodle (LMS)
 http://lms.local.bombano.com {
     reverse_proxy moodle:80
+    import common
 }
 
 # Landing Pages
@@ -29,6 +35,7 @@ http://landing.local.bombano.com {
         path *.css, *.gif, *.ico, *.jpeg, *.jpg, *.js, *.png
     }
     header @staticFiles Cache-Control "max-age=31536000"
+    import common
 }
 
 # PhpMyAdmin
