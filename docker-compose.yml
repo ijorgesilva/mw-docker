@@ -26,7 +26,10 @@ services:
   moodle:
     build:
       context: ./apps/moodle
-      dockerfile: Dockerfile
+      dockerfile: ${COMPOSE_PROJECT_ENV}.dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
     container_name: ${COMPOSE_PROJECT_NAME}_moodle
     volumes:
       - ./data/moodle_data/html/moodle:/var/www/html
