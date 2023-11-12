@@ -55,9 +55,10 @@ WORKDIR /var/www/html
 RUN mkdir -p /var/www/moodledata
 
 # Set permissions for the Moodle directory
-RUN chown -R www-data /var/www/html /var/www/moodledata \
-    && chmod -R 755 /var/www/html \
-    && chmod -R 770 /var/www/moodledata
+RUN chown -R root:www-data /var/www/html \
+    && chown -R www-data: /var/www/moodledata \
+    && chmod -R 700 /var/www/html \
+    && chmod -R 755 /var/www/moodledata
 
 USER root
 
