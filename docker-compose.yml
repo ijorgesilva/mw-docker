@@ -31,6 +31,16 @@ services:
     volumes:
       - ./data/moodle_data/html/moodle:/var/www/html
       - ./data/moodle_data/moodledata:/var/www/moodledata
+    # To achieve data persistence for the Moodle file, download moodle with command instead of Dockerfile
+    command: >
+      bash -c "
+      if [ ! -f /var/www/html/version.php ]; then
+        wget https://download.moodle.org/download.php/direct/stable403/moodle-latest-403.tgz -O moodle.tgz &&
+        tar -xzvf moodle.tgz --strip-components=1 &&
+        rm moodle.tgz;
+      fi;
+      apache2-foreground
+      "
     environment:
       MOODLE_DOCKER_WEB_HOST: ${MOODLE_DOCKER_WEB_HOST:-lms.local.bombano.com}
       MOODLE_DATABASE_HOST: ${MOODLE_DATABASE_HOST:-moodle-db}
