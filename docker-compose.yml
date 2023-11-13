@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-
   caddy:
     image: caddy:alpine
     container_name: ${COMPOSE_PROJECT_NAME}_caddy
@@ -23,19 +22,36 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-        
+
   moodle:
-    image: 'moodlehq/moodle-php-apache:${MOODLE_DOCKER_PHP_VERSION}'
+    build:
+      context: ./apps/moodle
+      dockerfile: ${COMPOSE_PROJECT_ENV}.dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
     container_name: ${COMPOSE_PROJECT_NAME}_moodle
     volumes:
       - ./data/moodle_data/html/moodle:/var/www/html
-      - ./data/moodle_data/moodledata:/var/moodledata
-      - ./apps/moodle/php.ini:/usr/local/etc/php/conf.d/php.ini
+      - ./data/moodle_data/moodledata:/var/www/moodledata
+    # To achieve data persistence for the Moodle file, download moodle with command instead of Dockerfile
+    command: >
+      bash -c "
+      if [ ! -f /var/www/html/version.php ]; then
+        wget https://download.moodle.org/download.php/direct/stable403/moodle-latest-403.tgz -O moodle.tgz &&
+        tar -xzvf moodle.tgz --strip-components=1 &&
+        rm moodle.tgz;
+      fi;
+      apache2-foreground
+      "
     environment:
-      MOODLE_DATABASE_HOST: moodle-db
-      MOODLE_DATABASE_NAME: moodle
-      MOODLE_DATABASE_USER: ${MOODLE_DB_USER}
-      MOODLE_DATABASE_PASSWORD: ${MOODLE_DB_PASSWORD}
+      MOODLE_DOCKER_WEB_HOST: ${MOODLE_DOCKER_WEB_HOST:-lms.local.bombano.com}
+      MOODLE_DATABASE_HOST: ${MOODLE_DATABASE_HOST:-moodle-db}
+      MOODLE_DATABASE_NAME: ${MOODLE_DATABASE_NAME:-exampledb}
+      MOODLE_DATABASE_USER: ${MOODLE_DB_USER:-exampleuser}
+      MOODLE_DATABASE_PASSWORD: ${MOODLE_DB_PASSWORD:-examplepass}
+    depends_on:
+      - moodle-db
     networks:
       - backend
       - frontend
@@ -46,15 +62,16 @@ services:
         max-file: "3"
 
   moodle-db:
-    image: mysql:5.7
+    image: mysql:8.0
     container_name: ${COMPOSE_PROJECT_NAME}_moodle-db
     volumes:
       - ./data/moodle_data/db:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: moodle
-      MYSQL_USER: ${MOODLE_DB_USER}
-      MYSQL_PASSWORD: ${MOODLE_DB_PASSWORD}
+      MYSQL_DATABASE: ${MOODLE_DB_NAME:-exampledb}
+      MYSQL_USER: ${MOODLE_DB_USER:-exampleuser}
+      MYSQL_PASSWORD: ${MOODLE_DB_PASSWORD:-examplepass}
+    command: --default-authentication-plugin=mysql_native_password
     networks:
       - backend
     restart: on-failure
@@ -71,7 +88,6 @@ services:
     volumes:
       - ./data/wordpress_data/html/wordpress:/var/www/html
     environment:
-      # Database configuration
       WORDPRESS_DB_USER: ${WORDPRESS_DB_USER:-exampleuser}
       WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME:-exampledb}
       WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD:-examplepass}
@@ -87,7 +103,7 @@ services:
         max-file: "3"
 
   wordpress-db:
-    image: mysql:5.7
+    image: mysql:8.0
     volumes:
       - ./data/wordpress_data/db:/var/lib/mysql
     environment:
@@ -115,26 +131,12 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-  
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    container_name: ${COMPOSE_PROJECT_NAME}_phpmyadmin
-    environment:
-      PMA_HOST: wordpress-db
-      PMA_PORT: 3306
-    ports:
-      - "8080:80"
-    depends_on:
-      - wordpress-db
-    networks:
-      - backend
 
 volumes:
   caddy_data: {}
   caddy_config: {}
-  moodle_data:
-  wordpress_data:
-  nginx_conf:
+  moodle_data: {}
+  wordpress_data: {}
 
 networks:
   frontend:

@@ -3,24 +3,23 @@
 # https://caddyserver.com/docs/caddyfile/options
 #--------------------------------------------------------------------------
 
-
 #--------------------------------------------------------------------------
 # Reverse proxy
 # https://caddyserver.com/docs/caddyfile/directives/reverse_proxy
 #--------------------------------------------------------------------------
+
+# WordPress (CMS)
+http://local.bombano.com {
+    reverse_proxy wordpress:80
+}
 
 # Moodle (LMS)
 http://lms.local.bombano.com {
     reverse_proxy moodle:80
 }
 
-# WordPress (CMS)
-http://cms.local.bombano.com {
-    reverse_proxy wordpress:80
-}
-
-# Static Site
-http://local.bombano.com {
+# Landing Pages
+http://landing.local.bombano.com {
     root * /usr/share/caddy/static_site
     file_server
     encode gzip
